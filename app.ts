@@ -14,10 +14,11 @@ wss.on('connection', function connection(ws: any, req: any) {
 		console.log('received: %s', message);
 		if (message == 'scan') {
 			try {
-				scanImage();
+				let file = scanImage();
 				const content = fs.readFileSync('scanned.jpg');
 				const imageData = new Uint8Array(content);
 				ws.send(new Blob([imageData], { type: 'image/png' }));
+				if (fs.existsSync(file)) fs.unlinkSync(file);
 			} catch (e) {
 				console.log(e);
 				ws.send(e);
