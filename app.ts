@@ -10,11 +10,12 @@ const wss = new WebSocket.Server({ server });
 var msg: any;
 
 wss.on('connection', function connection(ws: any, req: any) {
-	ws.on('message', function incoming(message: String) {
+	ws.on('message', function incoming(message: string) {
 		console.log('received: %s', message);
-		if (message == 'scan') {
+		var mObj = JSON.parse(message);
+		if (mObj.action == 'scan') {
 			try {
-				let file = scanImage();
+				let file = scanImage(mObj.color_mode, mObj.resolution);
 				const content = fs.readFileSync('scanned.jpg');
 				const imageData = new Uint8Array(content);
 				ws.send(new Blob([imageData], { type: 'image/png' }));

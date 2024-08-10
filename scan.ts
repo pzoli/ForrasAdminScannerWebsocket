@@ -13,18 +13,18 @@ const WIA_VERTICAL_SCAN_SIZE_PIXELS = '6152';
 const WIA_SCAN_BRIGHTNESS_PERCENTS = '6154';
 const WIA_SCAN_CONTRAST_PERCENTS = '6155';
 
-const resolution = 150;
-const width_pixel = resolution * 8.5;
-const height_pixel = resolution * 11;
-//const color_mode = 1; //Color
-const color_mode = 2; //grayscale
-//const color_mode = 4; //back-white
-
 const OUTPUT_FILE_NAME = 'scanned.jpg';
 
-function scanImage() {
+//const color_mode = 1; //Color
+//const color_mode = 2; //grayscale
+//const color_mode = 4; //back-white
+
+function scanImage(color_mode: number, resolution: number) {
 	let deviceManager = winax.Object('WIA.DeviceManager');
 	let imgProc = winax.Object('WIA.ImageProcess');
+
+	const width_pixel = resolution * 8.5;
+	const height_pixel = resolution * 11;
 
 	if (deviceManager.DeviceInfos.Count > 0) {
 		const device_info = deviceManager.DeviceInfos(1);
@@ -55,7 +55,7 @@ function scanImage() {
 		image.SaveFile(OUTPUT_FILE_NAME);
 		return OUTPUT_FILE_NAME;
 	} else {
-		throw 'Output file not found';
+		throw 'No device found';
 	}
 }
 
