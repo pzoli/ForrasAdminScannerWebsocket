@@ -20,6 +20,8 @@ const height_pixel = resolution * 11;
 const color_mode = 2; //grayscale
 //const color_mode = 4; //back-white
 
+const OUTPUT_FILE_NAME = 'scanned.jpg';
+
 function scanImage() {
 	let deviceManager = winax.Object('WIA.DeviceManager');
 	let imgProc = winax.Object('WIA.ImageProcess');
@@ -49,8 +51,11 @@ function scanImage() {
 		imgProc.Filters(1).Properties('Quality').value = 75;
 		image = imgProc.Apply(image);
 
-		if (fs.existsSync('scanned.jpg')) fs.unlinkSync('scanned.jpg');
-		image.SaveFile('scanned.jpg');
+		if (fs.existsSync(OUTPUT_FILE_NAME)) fs.unlinkSync(OUTPUT_FILE_NAME);
+		image.SaveFile(OUTPUT_FILE_NAME);
+		return OUTPUT_FILE_NAME;
+	} else {
+		throw 'Output file not found';
 	}
 }
 
