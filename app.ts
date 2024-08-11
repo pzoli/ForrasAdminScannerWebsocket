@@ -15,11 +15,17 @@ wss.on('connection', function connection(ws: any, req: any) {
 		var mObj = JSON.parse(message);
 		if (mObj.action == 'scan') {
 			try {
-				let file = scanImage(mObj.color_mode, mObj.resolution);
-				const content = fs.readFileSync('scanned.jpg');
+				const fileName = scanImage(mObj.color_mode, mObj.resolution);
+				const content = fs.readFileSync(fileName);
 				const imageData = new Uint8Array(content);
-				ws.send(new Blob([imageData], { type: 'image/png' }));
-				if (fs.existsSync(file)) fs.unlinkSync(file);
+				ws.send(
+					new Blob([imageData], {
+						type:
+							'image/' +
+							fileName.substring(fileName.indexOf('.') + 1),
+					}),
+				);
+				if (fs.existsSync(fileName)) fs.unlinkSync(fileName);
 			} catch (e) {
 				console.log(e);
 				ws.send(e);
