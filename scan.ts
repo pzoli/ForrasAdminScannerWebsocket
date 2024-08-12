@@ -55,7 +55,7 @@ function scanImage(color_mode: number, resolution: number) {
 		image.SaveFile(OUTPUT_FILE_NAME);
 		return OUTPUT_FILE_NAME;
 	} else {
-		throw 'No device found';
+		throw 'Nincs eszköz kijelölve!';
 	}
 }
 
