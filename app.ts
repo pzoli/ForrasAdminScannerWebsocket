@@ -1,7 +1,7 @@
 import fs from 'fs';
 import WebSocket from 'ws';
 import url from 'url';
-import { scanImage } from './scan';
+import { scanImage, getDeviceInfos } from './scan';
 
 import http from 'http';
 const server = http.createServer();
@@ -13,23 +13,36 @@ wss.on('connection', function connection(ws: any, req: any) {
 	ws.on('message', function incoming(message: string) {
 		console.log('received: %s', message);
 		var mObj = JSON.parse(message);
-		if (mObj.action == 'scan') {
-			try {
-				const fileName = scanImage(mObj.color_mode, mObj.resolution);
-				const content = fs.readFileSync(fileName);
-				const imageData = new Uint8Array(content);
-				ws.send(
-					new Blob([imageData], {
-						type:
-							'image/' +
-							fileName.substring(fileName.indexOf('.') + 1),
-					}),
-				);
-				if (fs.existsSync(fileName)) fs.unlinkSync(fileName);
-			} catch (e) {
-				console.log(e);
-				ws.send(e);
+		switch (mObj.action) {
+			case 'scan': {
+				try {
+					const fileName = scanImage(
+						mObj.assetId,
+						mObj.color_mode,
+						mObj.resolution,
+					);
+					const content = fs.readFileSync(fileName);
+					const imageData = new Uint8Array(content);
+					ws.send(
+						new Blob([imageData], {
+							type:
+								'image/' +
+								fileName.substring(fileName.indexOf('.') + 1),
+						}),
+					);
+					if (fs.existsSync(fileName)) fs.unlinkSync(fileName);
+				} catch (e) {
+					console.log(e);
+					ws.send(e);
+				}
+				break;
 			}
+			case 'deviceinfo': {
+				ws.send(getDeviceInfos());
+				break;
+			}
+			default:
+				break;
 		}
 	});
 	ws.on('close', function () {

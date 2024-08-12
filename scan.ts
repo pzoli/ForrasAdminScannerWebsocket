@@ -19,7 +19,7 @@ const OUTPUT_FILE_NAME = 'scanned.jpg';
 //const color_mode = 2; //grayscale
 //const color_mode = 4; //back-white
 
-function scanImage(color_mode: number, resolution: number) {
+function scanImage(assetId: number, color_mode: number, resolution: number) {
 	let deviceManager = winax.Object('WIA.DeviceManager');
 	let imgProc = winax.Object('WIA.ImageProcess');
 
@@ -27,35 +27,41 @@ function scanImage(color_mode: number, resolution: number) {
 	const height_pixel = resolution * 11;
 
 	if (deviceManager.DeviceInfos.Count > 0) {
-		const device_info = deviceManager.DeviceInfos(1);
-		for (let idx = 1; idx <= device_info.Properties.Count; idx++) {
-			const property = device_info.Properties(idx);
-			console.log(property.Name + ' : ' + String(property.Value));
+		try {
+			const device_info = deviceManager.DeviceInfos(assetId);
+			const device = device_info.Connect();
+			const item = device.Items[assetId];
+			setWiaProperty(item, WIA_SCAN_COLOR_MODE, color_mode);
+			setWiaProperty(
+				item,
+				WIA_HORIZONTAL_SCAN_RESOLUTION_DPI,
+				resolution,
+			);
+			setWiaProperty(item, WIA_VERTICAL_SCAN_RESOLUTION_DPI, resolution);
+			setWiaProperty(item, WIA_HORIZONTAL_SCAN_START_PIXEL, 0);
+			setWiaProperty(item, WIA_VERTICAL_SCAN_START_PIXEL, 0);
+			setWiaProperty(item, WIA_HORIZONTAL_SCAN_SIZE_PIXELS, width_pixel);
+			setWiaProperty(item, WIA_VERTICAL_SCAN_SIZE_PIXELS, height_pixel);
+			setWiaProperty(item, WIA_SCAN_BRIGHTNESS_PERCENTS, 0);
+			setWiaProperty(item, WIA_SCAN_CONTRAST_PERCENTS, 0);
+
+			let image = item.Transfer(WIA_IMG_FORMAT_JPG);
+
+			imgProc.Filters.Add(imgProc.FilterInfos('Convert').FilterID);
+			imgProc.Filters(1).Properties('FormatID').value =
+				WIA_IMG_FORMAT_JPG;
+			imgProc.Filters(1).Properties('Quality').value = 75;
+			image = imgProc.Apply(image);
+
+			if (fs.existsSync(OUTPUT_FILE_NAME))
+				fs.unlinkSync(OUTPUT_FILE_NAME);
+			image.SaveFile(OUTPUT_FILE_NAME);
+			return OUTPUT_FILE_NAME;
+		} catch (e) {
+			throw '{"return":"error","message":"' + e + '"}';
 		}
-		const device = device_info.Connect();
-		const item = device.Items[1];
-		setWiaProperty(item, WIA_SCAN_COLOR_MODE, color_mode);
-		setWiaProperty(item, WIA_HORIZONTAL_SCAN_RESOLUTION_DPI, resolution);
-		setWiaProperty(item, WIA_VERTICAL_SCAN_RESOLUTION_DPI, resolution);
-		setWiaProperty(item, WIA_HORIZONTAL_SCAN_START_PIXEL, 0);
-		setWiaProperty(item, WIA_VERTICAL_SCAN_START_PIXEL, 0);
-		setWiaProperty(item, WIA_HORIZONTAL_SCAN_SIZE_PIXELS, width_pixel);
-		setWiaProperty(item, WIA_VERTICAL_SCAN_SIZE_PIXELS, height_pixel);
-		setWiaProperty(item, WIA_SCAN_BRIGHTNESS_PERCENTS, 0);
-		setWiaProperty(item, WIA_SCAN_CONTRAST_PERCENTS, 0);
-
-		let image = item.Transfer(WIA_IMG_FORMAT_JPG);
-
-		imgProc.Filters.Add(imgProc.FilterInfos('Convert').FilterID);
-		imgProc.Filters(1).Properties('FormatID').value = WIA_IMG_FORMAT_JPG;
-		imgProc.Filters(1).Properties('Quality').value = 75;
-		image = imgProc.Apply(image);
-
-		if (fs.existsSync(OUTPUT_FILE_NAME)) fs.unlinkSync(OUTPUT_FILE_NAME);
-		image.SaveFile(OUTPUT_FILE_NAME);
-		return OUTPUT_FILE_NAME;
 	} else {
-		throw 'Nincs eszköz kijelölve!';
+		throw '{"return":"error","message":"Nincs eszköz kijelölve!"}';
 	}
 }
 
@@ -66,4 +72,34 @@ function setWiaProperty(device: any, property: string, value: any) {
 	}
 }
 
-export { scanImage };
+function getDeviceInfos(): String {
+	let deviceManager = winax.Object('WIA.DeviceManager');
+	let result: {
+		return: string;
+		devices: { assetId: number; assetName: string }[];
+	} = {
+		return: 'deviceinfo',
+		devices: [],
+	};
+	for (
+		let deviceIdx = 1;
+		deviceIdx <= deviceManager.DeviceInfos.Count;
+		deviceIdx++
+	) {
+		const device_info = deviceManager.DeviceInfos(deviceIdx);
+		let deviceName = '';
+		let port = '';
+		for (let idx = 1; idx <= device_info.Properties.Count; idx++) {
+			const property = device_info.Properties(idx);
+			if (property.Name == 'Name') deviceName = String(property.Value);
+			if (property.Name == 'Port') port = String(property.Value);
+			console.log(property.Name + ' : ' + String(property.Value));
+		}
+		result.devices.push({
+			assetId: deviceIdx,
+			assetName: `${deviceName}, Port: ${port}`,
+		});
+	}
+	return JSON.stringify(result);
+}
+export { scanImage, getDeviceInfos };
