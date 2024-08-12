@@ -85,21 +85,25 @@ function getDeviceInfos(): String {
 		let deviceIdx = 1;
 		deviceIdx <= deviceManager.DeviceInfos.Count;
 		deviceIdx++
-	) {
-		const device_info = deviceManager.DeviceInfos(deviceIdx);
-		let deviceName = '';
-		let port = '';
-		for (let idx = 1; idx <= device_info.Properties.Count; idx++) {
-			const property = device_info.Properties(idx);
-			if (property.Name == 'Name') deviceName = String(property.Value);
-			if (property.Name == 'Port') port = String(property.Value);
-			console.log(property.Name + ' : ' + String(property.Value));
-		}
-		result.devices.push({
-			assetId: deviceIdx,
-			assetName: `${deviceName}, Port: ${port}`,
-		});
-	}
+	)
+		try {
+			const device_info = deviceManager.DeviceInfos(deviceIdx);
+			const device = device_info.Connect();
+
+			let deviceName = '';
+			let port = '';
+			for (let idx = 1; idx <= device_info.Properties.Count; idx++) {
+				const property = device_info.Properties(idx);
+				if (property.Name == 'Name')
+					deviceName = String(property.Value);
+				if (property.Name == 'Port') port = String(property.Value);
+				console.log(property.Name + ' : ' + String(property.Value));
+			}
+			result.devices.push({
+				assetId: deviceIdx,
+				assetName: `${deviceName}, Port: ${port}`,
+			});
+		} catch {}
 	return JSON.stringify(result);
 }
 export { scanImage, getDeviceInfos };
