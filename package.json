@@ -10,7 +10,7 @@
 	},
 	"nodemonConfig": {
 		"watch": [
-			"src"
+			"."
 		],
 		"ext": "ts",
 		"exec": "ts-node app.ts"
