@@ -16,21 +16,29 @@ wss.on('connection', function connection(ws: any, req: any) {
 		switch (mObj.action) {
 			case 'scan': {
 				try {
+					//*
 					const fileName = scanImage(
 						mObj.assetId,
 						mObj.color_mode,
 						mObj.resolution,
 					);
-					const content = fs.readFileSync(fileName);
-					const imageData = new Uint8Array(content);
-					ws.send(
-						new Blob([imageData], {
-							type:
-								'image/' +
-								fileName.substring(fileName.indexOf('.') + 1),
-						}),
-					);
-					if (fs.existsSync(fileName)) fs.unlinkSync(fileName);
+					//*/
+					//const fileName = 'scanned_large.jpg';
+					//const fileName = 'scanned_small.jpg';
+					if (fs.existsSync(fileName)) {
+						const content = fs.readFileSync(fileName);
+						const imageData = new Uint8Array(content);
+						ws.send(
+							new Blob([imageData], {
+								type:
+									'image/' +
+									fileName.substring(
+										fileName.indexOf('.') + 1,
+									),
+							}),
+						);
+						fs.unlinkSync(fileName);
+					}
 				} catch (e) {
 					console.log(e);
 					ws.send(e);

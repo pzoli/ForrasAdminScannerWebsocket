@@ -104,6 +104,7 @@ function getDeviceInfos(): String {
 				assetName: `${deviceName}, Port: ${port}`,
 			});
 		} catch {}
+	//result.devices = [{ assetId: 1, assetName: 'autobot' }];
 	return JSON.stringify(result);
 }
 export { scanImage, getDeviceInfos };
